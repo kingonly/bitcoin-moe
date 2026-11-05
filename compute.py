@@ -215,9 +215,14 @@ def load_prices(dates):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1))
+    ap.add_argument("--from-height", type=int, default=0,
+                    help="ignore extract files below this height")
+    ap.add_argument("--to-height", type=int, default=10**9,
+                    help="ignore extract files above this height")
     args = ap.parse_args()
 
     cids = sorted(int(f[:6]) for f in os.listdir(EXTRACT) if f.endswith(".jsonl.gz"))
+    cids = [c for c in cids if args.from_height <= c * 100 <= args.to_height]
     if not cids:
         sys.exit("no extract files")
     gaps = [c for a, c in zip(cids, cids[1:]) if c != a + 1]
