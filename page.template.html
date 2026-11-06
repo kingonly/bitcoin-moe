@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Value settled on bitcoin</title>
+<meta name="description" content="__META_DESC__">
+<style>
+:root {
+  color-scheme: light;
+  --page: #fdfdfc;
+  --fg-1: #111; --fg-2: rgba(17,17,17,.66); --fg-3: rgba(17,17,17,.44);
+  --line: rgba(17,17,17,.08); --axis: rgba(17,17,17,.20);
+  --c1: #6da7ec; --c2: #2a78d6; --c3: #104281;
+  --ease-ui: cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0f0f12;
+    --fg-1: #f0efec; --fg-2: rgba(240,239,236,.68); --fg-3: rgba(240,239,236,.46);
+    --line: rgba(240,239,236,.10); --axis: rgba(240,239,236,.24);
+    --c1: #184f95; --c2: #3987e5; --c3: #9ec5f4;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0f0f12;
+  --fg-1: #f0efec; --fg-2: rgba(240,239,236,.68); --fg-3: rgba(240,239,236,.46);
+  --line: rgba(240,239,236,.10); --axis: rgba(240,239,236,.24);
+  --c1: #184f95; --c2: #3987e5; --c3: #9ec5f4;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { margin: 0; background: var(--page); color: var(--fg-1); font: 400 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+::selection { background: color-mix(in srgb, var(--c2) 20%, transparent); }
+main { max-width: 620px; margin: 0 auto; padding: 96px 24px 120px; }
+h1 { font-size: 36px; line-height: 1.12; font-weight: 600; letter-spacing: -.022em; margin: 0; text-wrap: balance; }
+.when { font-size: 17px; color: var(--fg-3); margin: 10px 0 0; }
+section { margin-top: 72px; }
+h2 { font-size: 15px; font-weight: 600; margin: 0 0 20px; }
+h2 small { font-size: inherit; font-weight: 400; color: var(--fg-3); margin-left: 8px; }
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--axis); text-underline-offset: 3px; transition: text-decoration-color 150ms var(--ease-ui); }
+a:hover { text-decoration-color: currentColor; }
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: right; font-weight: 400; color: var(--fg-3); font-size: 13px; padding: 0 0 10px 16px; white-space: nowrap; }
+th:first-child { text-align: left; padding-left: 0; }
+td { padding: 14px 0 14px 16px; border-top: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; vertical-align: top; }
+td:first-child { text-align: left; padding-left: 0; white-space: normal; }
+td small { display: block; font-size: 13px; color: var(--fg-3); margin-top: 1px; }
+td.q { color: var(--fg-2); }
+.sw { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 9px; vertical-align: .06em; }
+td small { margin-left: 17px; }
+.c1 { background: var(--c1); } .c2 { background: var(--c2); } .c3 { background: var(--c3); }
+
+#chart { position: relative; }
+#chart svg { display: block; width: 100%; height: auto; overflow: visible; outline: none; touch-action: pan-y; }
+#chart svg:focus-visible { outline: 2px solid color-mix(in srgb, var(--c2) 50%, transparent); outline-offset: 6px; border-radius: 4px; }
+.tick { font-size: 12px; fill: var(--fg-3); font-variant-numeric: tabular-nums; }
+#tip { position: absolute; pointer-events: none; display: none; z-index: 2; background: var(--page); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 13px; white-space: nowrap; }
+#tip .d { color: var(--fg-3); margin-bottom: 3px; }
+#tip .r { display: flex; align-items: center; gap: 7px; }
+#tip .r i { width: 10px; height: 2px; border-radius: 1px; flex: none; }
+#tip .r b { font-weight: 600; font-variant-numeric: tabular-nums; }
+#tip .r span { color: var(--fg-2); }
+details { margin-top: 14px; font-size: 13px; color: var(--fg-3); }
+summary { cursor: pointer; width: fit-content; }
+summary:hover { color: var(--fg-2); }
+.scroll { max-height: 300px; overflow: auto; margin-top: 12px; color: var(--fg-1); }
+.scroll td, .scroll th { padding-top: 7px; padding-bottom: 7px; font-size: 13px; }
+.scroll th { position: sticky; top: 0; background: var(--page); }
+.scroll .sw { margin-right: 6px; }
+
+.notes { margin-top: 80px; font-size: 13px; color: var(--fg-3); max-width: 60ch; }
+.notes p { margin: 0 0 10px; text-wrap: pretty; }
+.notes a { color: var(--fg-2); }
+@media (max-width: 520px) {
+  main { padding: 56px 20px 80px; }
+  h1 { font-size: 29px; }
+  .when { font-size: 16px; }
+  section, .notes { margin-top: 56px; }
+  td, th { padding-left: 12px; }
+  .pd { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Value settled on bitcoin</h1>
+  <p class="when">__PERIOD_LONG__</p>
+
+
+  <section>
+    <table>
+      <thead><tr><th>Counted</th><th>Total</th><th class="pd">Per day</th><th>Share</th></tr></thead>
+      <tbody>
+__LADDER__
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Per day<small>7-day average</small></h2>
+    <div id="chart"><div id="tip"></div></div>
+    <details>
+      <summary>Daily values</summary>
+      <div class="scroll"><table id="daily"><thead><tr><th>Day</th><th>All</th><th><i class="sw c1"></i>Change</th><th><i class="sw c2"></i>Early</th><th><i class="sw c3"></i>Assumed</th></tr></thead><tbody></tbody></table></div>
+    </details>
+  </section>
+
+  <div class="notes">
+    <p>Blocks __H0__ to __H1__, read from Breez's Bitcoin Core node. Dollars at the Coin Metrics daily rate. A round amount is a multiple of __ROUND__ BTC.</p>
+    <p>The filters follow Coin Metrics. They cannot tell an exchange moving its own coins from a payment. Lightning is not counted.</p>
+    <p><a href="__REPO_URL__">Code</a> &nbsp;·&nbsp; <a href="daily.csv" download>Daily data</a></p>
+  </div>
+</main>
+
+<script>
+const DATA = __DATA__;
+(function () {
+  const NS = 'http://www.w3.org/2000/svg';
+  const host = document.getElementById('chart'), tip = document.getElementById('tip');
+  const SER = __SERIES__;
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fmtDay = d => { const p = d.split('-'); return (+p[2]) + ' ' + MON[+p[1] - 1]; };
+  const fmtB = v => '$' + v.toFixed(1) + 'B';
+  const el = (n, a, t) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (t != null) e.textContent = t; return e; };
+  const WIN = 7;
+  const AVG = DATA.map((d, i) => i < WIN - 1 ? null : [1, 2, 3, 4].map(k => { let t = 0; for (let j = i - WIN + 1; j <= i; j++) t += DATA[j][k]; return t / WIN; }));
+  const val = (i, k) => AVG[i][k - 1];
+  let svg, geo, cur = -1;
+
+  function render() {
+    if (svg) svg.remove();
+    const W = host.clientWidth, H = Math.round(Math.max(260, Math.min(360, W * 0.62)));
+    const m = { l: 40, r: 0, t: 8, b: 26 };
+    const pw = W - m.l - m.r, ph = H - m.t - m.b, n = DATA.length;
+    const top = Math.max(...AVG.filter(Boolean).map(a => Math.max(...SER.map(s => a[s.k - 1]))));
+    const stepY = top > 60 ? 20 : 10, ymax = Math.ceil(top / stepY) * stepY;
+    const x = i => m.l + pw * i / (n - 1), y = v => m.t + ph * (1 - v / ymax);
+    geo = { m, pw, n, x, y, W };
+    svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, tabindex: 0, role: 'img',
+      'aria-label': 'Value of bitcoin transaction outputs per day, 7-day average, after each filter. Left and right arrow keys step through the days.' });
+    for (let v = 0; v <= ymax; v += stepY) {
+      svg.append(el('line', { x1: m.l, x2: W, y1: y(v), y2: y(v), stroke: v ? 'var(--line)' : 'var(--axis)', 'stroke-width': 1 }));
+      if (v) svg.append(el('text', { x: 0, y: y(v) + 4, class: 'tick' }, '$' + v + 'B'));
+    }
+    const months = DATA.map((d, i) => [d, i]).filter(p => p[0][0].slice(8) === '01');
+    const every = pw / months.length < 40 ? 2 : 1;
+    months.forEach((p, j) => {
+      if (j % every) return;
+      svg.append(el('text', { x: x(p[1]), y: H - 6, class: 'tick', 'text-anchor': p[1] ? 'middle' : 'start' }, MON[+p[0][0].slice(5, 7) - 1]));
+    });
+    SER.forEach(s => {
+      const pts = DATA.map((d, i) => AVG[i] ? x(i).toFixed(1) + ',' + y(val(i, s.k)).toFixed(1) : '').join(' ').trim();
+      svg.append(el('polyline', { points: pts, fill: 'none', stroke: s.color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+    });
+    const g = el('g', { id: 'hover', style: 'display:none' });
+    g.append(el('line', { id: 'xh', y1: m.t, y2: m.t + ph, stroke: 'var(--axis)', 'stroke-width': 1 }));
+    SER.forEach(s => g.append(el('circle', { id: 'dot' + s.k, r: 4, fill: s.color, stroke: 'var(--page)', 'stroke-width': 2 })));
+    svg.append(g);
+    svg.append(el('rect', { x: m.l, y: 0, width: pw, height: H, fill: 'transparent' }));
+    host.append(svg);
+    svg.addEventListener('pointermove', e => {
+      const r = svg.getBoundingClientRect();
+      show(Math.round(((e.clientX - r.left) - m.l) / pw * (n - 1)));
+    });
+    svg.addEventListener('pointerleave', hide);
+    svg.addEventListener('blur', hide);
+    svg.addEventListener('focus', () => show(cur < 0 ? n - 1 : cur));
+    svg.addEventListener('keydown', e => {
+      const step = { ArrowLeft: -1, ArrowRight: 1, PageUp: -30, PageDown: 30 }[e.key];
+      if (e.key === 'Home') show(WIN - 1); else if (e.key === 'End') show(n - 1); else if (step) show(cur + step); else return;
+      e.preventDefault();
+    });
+    cur = -1; hide();
+  }
+  function show(i) {
+    const { m, n, x, y, W } = geo;
+    i = Math.max(WIN - 1, Math.min(n - 1, i)); cur = i;
+    const d = DATA[i], px = x(i);
+    svg.querySelector('#hover').style.display = '';
+    const xh = svg.querySelector('#xh'); xh.setAttribute('x1', px); xh.setAttribute('x2', px);
+    SER.forEach(s => { const c = svg.querySelector('#dot' + s.k); c.setAttribute('cx', px); c.setAttribute('cy', y(val(i, s.k))); });
+    tip.replaceChildren();
+    const dd = document.createElement('div'); dd.className = 'd'; dd.textContent = fmtDay(d[0]); tip.append(dd);
+    SER.forEach(s => {
+      const r = document.createElement('div'); r.className = 'r';
+      const k = document.createElement('i'); k.style.background = s.color;
+      const b = document.createElement('b'); b.textContent = fmtB(val(i, s.k));
+      const sp = document.createElement('span'); sp.textContent = s.name;
+      r.append(k, b, sp); tip.append(r);
+    });
+    tip.style.display = 'block';
+    const tw = tip.offsetWidth;
+    tip.style.left = Math.max(0, Math.min(W - tw, px + 12 + tw > W ? px - 12 - tw : px + 12)) + 'px';
+    tip.style.top = m.t + 'px';
+  }
+  function hide() { if (svg) svg.querySelector('#hover').style.display = 'none'; tip.style.display = 'none'; }
+
+  const tb = document.querySelector('#daily tbody');
+  DATA.forEach((d, i) => {
+    const tr = document.createElement('tr');
+    [fmtDay(d[0])].concat(d.slice(1).map(fmtB)).forEach(t => { const td = document.createElement('td'); td.textContent = t; tr.append(td); });
+    tb.append(tr);
+  });
+  let lastW = 0;
+  const go = () => { if (host.clientWidth !== lastW) { lastW = host.clientWidth; render(); } };
+  window.addEventListener('resize', go); go();
+})();
+</script>
+</body>
+</html>

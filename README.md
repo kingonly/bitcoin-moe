@@ -2,6 +2,8 @@
 
 How much value does the Bitcoin blockchain settle per day, computed from the chain itself.
 
+The numbers for 1 January to 30 September 2026: https://kingonly.github.io/bitcoin-moe/
+
 Two stages. The node only answers RPC. All computation runs on your machine.
 
 ```
@@ -32,6 +34,18 @@ python3 compute.py                                   # stage 2: offline, about 2
 `fetch.py` options: `--to-date YYYY-MM-DD`, `--workers N` (default 2 parallel streams), `--newest-first`.
 It stops 6 blocks below the tip and only writes complete 100-block files, so re-running it later just adds the new blocks.
 Speed is about 1.8 blocks per second with 2 streams. Disk is about 23 MB per 100 blocks.
+
+## The page
+
+```
+python3 build_page.py                                # docs/index.html + docs/daily.csv for 1 Jan to 30 Sep 2026
+python3 build_page.py --start 2026-01-01 --end 2026-06-30
+```
+
+`build_page.py` fills `page.template.html` from `data/daily.csv` and writes a single static page with no external
+files, plus the daily rows for the period. `docs/` is what GitHub Pages serves (Settings, Pages, branch `master`, folder `/docs`).
+Every number on the page is computed at build time. The round-number precision of the last row is `STRICT` at the top
+of the script (`adj0`, multiples of 0.00001 BTC).
 
 ## Output
 

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Value settled on bitcoin</title>
+<meta name="description" content="Value of bitcoin transaction outputs, 1 January to 30 September 2026, before and after removing change. Computed from the chain itself.">
+<style>
+:root {
+  color-scheme: light;
+  --page: #fdfdfc;
+  --fg-1: #111; --fg-2: rgba(17,17,17,.66); --fg-3: rgba(17,17,17,.44);
+  --line: rgba(17,17,17,.08); --axis: rgba(17,17,17,.20);
+  --c1: #6da7ec; --c2: #2a78d6; --c3: #104281;
+  --ease-ui: cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0f0f12;
+    --fg-1: #f0efec; --fg-2: rgba(240,239,236,.68); --fg-3: rgba(240,239,236,.46);
+    --line: rgba(240,239,236,.10); --axis: rgba(240,239,236,.24);
+    --c1: #184f95; --c2: #3987e5; --c3: #9ec5f4;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0f0f12;
+  --fg-1: #f0efec; --fg-2: rgba(240,239,236,.68); --fg-3: rgba(240,239,236,.46);
+  --line: rgba(240,239,236,.10); --axis: rgba(240,239,236,.24);
+  --c1: #184f95; --c2: #3987e5; --c3: #9ec5f4;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { margin: 0; background: var(--page); color: var(--fg-1); font: 400 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+::selection { background: color-mix(in srgb, var(--c2) 20%, transparent); }
+main { max-width: 620px; margin: 0 auto; padding: 96px 24px 120px; }
+h1 { font-size: 36px; line-height: 1.12; font-weight: 600; letter-spacing: -.022em; margin: 0; text-wrap: balance; }
+.when { font-size: 17px; color: var(--fg-3); margin: 10px 0 0; }
+section { margin-top: 72px; }
+h2 { font-size: 15px; font-weight: 600; margin: 0 0 20px; }
+h2 small { font-size: inherit; font-weight: 400; color: var(--fg-3); margin-left: 8px; }
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--axis); text-underline-offset: 3px; transition: text-decoration-color 150ms var(--ease-ui); }
+a:hover { text-decoration-color: currentColor; }
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: right; font-weight: 400; color: var(--fg-3); font-size: 13px; padding: 0 0 10px 16px; white-space: nowrap; }
+th:first-child { text-align: left; padding-left: 0; }
+td { padding: 14px 0 14px 16px; border-top: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; vertical-align: top; }
+td:first-child { text-align: left; padding-left: 0; white-space: normal; }
+td small { display: block; font-size: 13px; color: var(--fg-3); margin-top: 1px; }
+td.q { color: var(--fg-2); }
+.sw { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 9px; vertical-align: .06em; }
+td small { margin-left: 17px; }
+.c1 { background: var(--c1); } .c2 { background: var(--c2); } .c3 { background: var(--c3); }
+
+#chart { position: relative; }
+#chart svg { display: block; width: 100%; height: auto; overflow: visible; outline: none; touch-action: pan-y; }
+#chart svg:focus-visible { outline: 2px solid color-mix(in srgb, var(--c2) 50%, transparent); outline-offset: 6px; border-radius: 4px; }
+.tick { font-size: 12px; fill: var(--fg-3); font-variant-numeric: tabular-nums; }
+#tip { position: absolute; pointer-events: none; display: none; z-index: 2; background: var(--page); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 13px; white-space: nowrap; }
+#tip .d { color: var(--fg-3); margin-bottom: 3px; }
+#tip .r { display: flex; align-items: center; gap: 7px; }
+#tip .r i { width: 10px; height: 2px; border-radius: 1px; flex: none; }
+#tip .r b { font-weight: 600; font-variant-numeric: tabular-nums; }
+#tip .r span { color: var(--fg-2); }
+details { margin-top: 14px; font-size: 13px; color: var(--fg-3); }
+summary { cursor: pointer; width: fit-content; }
+summary:hover { color: var(--fg-2); }
+.scroll { max-height: 300px; overflow: auto; margin-top: 12px; color: var(--fg-1); }
+.scroll td, .scroll th { padding-top: 7px; padding-bottom: 7px; font-size: 13px; }
+.scroll th { position: sticky; top: 0; background: var(--page); }
+.scroll .sw { margin-right: 6px; }
+
+.notes { margin-top: 80px; font-size: 13px; color: var(--fg-3); max-width: 60ch; }
+.notes p { margin: 0 0 10px; text-wrap: pretty; }
+.notes a { color: var(--fg-2); }
+@media (max-width: 520px) {
+  main { padding: 56px 20px 80px; }
+  h1 { font-size: 29px; }
+  .when { font-size: 16px; }
+  section, .notes { margin-top: 56px; }
+  td, th { padding-left: 12px; }
+  .pd { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Value settled on bitcoin</h1>
+  <p class="when">1 January to 30 September 2026</p>
+
+
+  <section>
+    <table>
+      <thead><tr><th>Counted</th><th>Total</th><th class="pd">Per day</th><th>Share</th></tr></thead>
+      <tbody>
+        <tr><td><i class="sw"></i>All outputs<small>Every output of every transaction.</small></td><td>$16.06T</td><td class="pd">$58.8B</td><td>100%</td></tr>
+        <tr><td><i class="sw c1"></i>Change removed<small>Outputs paid back to a sending address.</small></td><td>$4.08T</td><td class="pd">$14.9B</td><td>25%</td></tr>
+        <tr><td><i class="sw c2"></i>Early spends removed<small>Outputs spent again within an hour.</small></td><td>$2.22T</td><td class="pd">$8.1B</td><td>14%</td></tr>
+        <tr><td><i class="sw c3"></i>Assumed change removed<small>Non-round outputs paid alongside a round one.</small></td><td>$1.60T</td><td class="pd">$5.9B</td><td>10%</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Per day<small>7-day average</small></h2>
+    <div id="chart"><div id="tip"></div></div>
+    <details>
+      <summary>Daily values</summary>
+      <div class="scroll"><table id="daily"><thead><tr><th>Day</th><th>All</th><th><i class="sw c1"></i>Change</th><th><i class="sw c2"></i>Early</th><th><i class="sw c3"></i>Assumed</th></tr></thead><tbody></tbody></table></div>
+    </details>
+  </section>
+
+  <div class="notes">
+    <p>Blocks 930,341 to 969,369, read from Breez's Bitcoin Core node. Dollars at the Coin Metrics daily rate. A round amount is a multiple of 0.00001 BTC.</p>
+    <p>The filters follow Coin Metrics. They cannot tell an exchange moving its own coins from a payment. Lightning is not counted.</p>
+    <p><a href="https://github.com/kingonly/bitcoin-moe">Code</a> &nbsp;·&nbsp; <a href="daily.csv" download>Daily data</a></p>
+  </div>
+</main>
+
+<script>
+const DATA = [["2026-01-01",53.57,19.38,10.12,8.51],["2026-01-02",73.24,21.6,10.16,7.07],["2026-01-03",55.3,12.41,4.74,2.94],["2026-01-04",60.12,13.31,5.35,3.22],["2026-01-05",79.6,29.55,15.07,9.98],["2026-01-06",70.92,26.77,12.7,9.07],["2026-01-07",73.13,31.5,18.06,12.13],["2026-01-08",59.39,24.0,12.66,8.65],["2026-01-09",67.51,27.49,13.52,10.52],["2026-01-10",46.32,19.46,9.23,4.99],["2026-01-11",43.62,15.05,6.73,4.68],["2026-01-12",56.94,23.91,10.98,7.78],["2026-01-13",95.89,29.84,14.03,10.13],["2026-01-14",103.69,30.97,16.22,10.7],["2026-01-15",98.7,31.58,15.84,11.83],["2026-01-16",75.32,28.06,15.1,10.54],["2026-01-17",52.02,18.01,8.11,4.9],["2026-01-18",44.47,14.41,4.8,2.88],["2026-01-19",52.23,18.63,7.96,5.63],["2026-01-20",75.45,23.75,11.47,7.6],["2026-01-21",71.77,28.75,14.8,11.12],["2026-01-22",69.04,28.44,14.41,9.99],["2026-01-23",81.78,21.56,12.07,8.83],["2026-01-24",36.99,11.21,6.15,3.21],["2026-01-25",49.66,12.74,6.34,4.18],["2026-01-26",64.61,21.63,10.94,7.5],["2026-01-27",63.63,19.58,9.2,6.05],["2026-01-28",65.22,21.13,11.9,8.16],["2026-01-29",67.86,25.0,11.22,7.96],["2026-01-30",81.97,31.82,14.9,11.16],["2026-01-31",72.02,23.15,11.18,7.44],["2026-02-01",62.24,19.68,10.65,7.38],["2026-02-02",93.92,33.69,17.53,11.9],["2026-02-03",89.85,29.87,15.96,10.5],["2026-02-04",85.2,30.78,14.61,10.3],["2026-02-05",120.54,38.26,22.04,14.94],["2026-02-06",122.51,43.19,22.01,15.43],["2026-02-07",76.25,20.4,8.73,5.25],["2026-02-08",60.47,16.52,6.72,4.61],["2026-02-09",77.47,27.16,11.68,8.99],["2026-02-10",65.31,23.69,11.06,7.73],["2026-02-11",62.77,20.22,9.71,6.7],["2026-02-12",59.29,23.46,11.31,8.4],["2026-02-13",54.84,22.15,11.51,7.77],["2026-02-14",44.15,13.1,6.06,3.97],["2026-02-15",36.17,11.95,4.09,2.34],["2026-02-16",43.49,16.47,6.5,4.9],["2026-02-17",51.61,19.14,8.43,5.66],["2026-02-18",49.24,17.79,8.46,5.97],["2026-02-19",49.43,17.69,7.07,4.68],["2026-02-20",63.21,24.29,12.08,9.09],["2026-02-21",35.71,11.9,5.62,3.3],["2026-02-22",34.85,10.68,3.74,2.14],["2026-02-23",48.74,17.25,7.91,5.36],["2026-02-24",63.39,22.1,9.58,6.48],["2026-02-25",72.22,20.13,9.23,6.6],["2026-02-26",67.33,20.17,8.6,6.09],["2026-02-27",52.86,17.59,7.24,5.2],["2026-02-28",37.53,13.59,5.0,2.97],["2026-03-01",37.52,12.58,3.95,2.31],["2026-03-02",57.77,19.06,7.95,5.75],["2026-03-03",55.49,18.4,8.14,5.91],["2026-03-04",70.51,25.72,12.54,8.09],["2026-03-05",59.12,19.48,9.12,6.75],["2026-03-06",57.14,18.19,8.88,5.97],["2026-03-07",32.27,9.02,4.2,2.5],["2026-03-08",31.09,7.15,3.28,1.97],["2026-03-09",49.71,15.18,7.41,5.38],["2026-03-10",57.22,15.36,8.84,6.77],["2026-03-11",50.23,14.91,9.06,6.78],["2026-03-12",50.42,14.12,8.53,5.72],["2026-03-13",53.98,16.58,9.83,7.15],["2026-03-14",38.45,10.11,4.53,2.65],["2026-03-15",37.21,12.08,6.45,4.22],["2026-03-16",70.5,22.34,12.36,7.39],["2026-03-17",59.84,18.51,10.34,7.31],["2026-03-18",54.83,14.17,7.43,4.99],["2026-03-19",44.61,13.05,7.48,4.95],["2026-03-20",46.13,11.92,6.9,4.39],["2026-03-21",27.04,5.68,3.33,1.83],["2026-03-22",32.8,8.15,5.12,3.8],["2026-03-23",49.42,15.14,9.84,7.75],["2026-03-24",50.1,13.85,8.83,6.21],["2026-03-25",49.26,16.8,8.63,6.33],["2026-03-26",51.84,14.41,8.29,6.04],["2026-03-27",55.04,17.25,8.86,6.8],["2026-03-28",32.68,9.38,4.73,3.04],["2026-03-29",31.33,7.32,3.98,2.53],["2026-03-30",55.07,15.55,8.62,5.99],["2026-03-31",52.12,16.12,10.34,7.16],["2026-04-01",44.93,13.61,7.31,5.06],["2026-04-02",58.28,14.94,8.77,6.27],["2026-04-03",42.84,9.74,5.38,2.91],["2026-04-04",29.17,6.2,3.67,1.84],["2026-04-05",31.7,5.47,2.95,1.82],["2026-04-06",41.37,10.81,6.56,4.21],["2026-04-07",60.63,12.97,7.23,4.82],["2026-04-08",54.63,13.45,8.24,5.53],["2026-04-09",51.0,11.79,7.49,4.77],["2026-04-10",57.06,13.3,7.77,5.5],["2026-04-11",46.69,6.25,4.14,2.49],["2026-04-12",32.99,5.25,3.04,1.81],["2026-04-13",59.71,15.83,8.78,5.48],["2026-04-14",76.63,23.95,12.01,8.79],["2026-04-15",60.97,18.17,10.75,7.56],["2026-04-16",63.46,17.14,7.92,5.65],["2026-04-17",69.1,20.46,10.18,7.05],["2026-04-18",54.59,10.26,5.42,3.24],["2026-04-19",54.12,9.32,4.31,2.7],["2026-04-20",75.32,23.2,12.06,9.34],["2026-04-21",71.21,16.09,10.55,7.77],["2026-04-22",77.15,17.12,10.92,8.2],["2026-04-23",66.54,18.23,10.74,7.2],["2026-04-24",84.41,19.15,11.72,9.63],["2026-04-25",42.8,9.05,6.16,3.38],["2026-04-26",40.04,9.33,6.64,2.43],["2026-04-27",57.96,15.19,9.78,6.21],["2026-04-28",63.55,13.7,8.29,6.28],["2026-04-29",59.86,13.94,8.2,6.39],["2026-04-30",63.96,18.34,8.98,6.7],["2026-05-01",73.27,17.61,7.69,5.99],["2026-05-02",53.3,8.99,3.89,2.65],["2026-05-03",45.63,9.09,2.93,2.06],["2026-05-04",71.99,17.38,9.41,7.18],["2026-05-05",70.74,17.52,9.57,7.05],["2026-05-06",62.75,15.12,8.88,6.77],["2026-05-07",62.4,14.15,8.58,6.79],["2026-05-08",57.46,13.69,7.13,5.32],["2026-05-09",38.24,7.2,4.33,2.82],["2026-05-10",44.92,5.53,3.36,2.41],["2026-05-11",62.49,12.09,6.79,5.18],["2026-05-12",57.49,11.32,6.83,5.26],["2026-05-13",62.24,14.33,8.27,6.38],["2026-05-14",65.68,15.37,8.2,5.95],["2026-05-15",61.67,17.35,9.98,8.24],["2026-05-16",46.45,5.19,2.91,2.26],["2026-05-17",34.06,5.63,2.99,1.95],["2026-05-18",57.05,14.34,7.7,5.78],["2026-05-19",59.53,15.15,8.22,6.53],["2026-05-20",49.59,14.21,7.12,5.33],["2026-05-21",48.55,11.2,6.82,4.87],["2026-05-22",58.47,11.58,6.13,5.0],["2026-05-23",41.06,7.46,4.03,3.12],["2026-05-24",39.41,6.98,3.98,2.82],["2026-05-25",52.28,8.79,4.74,3.41],["2026-05-26",56.11,11.84,6.46,5.04],["2026-05-27",67.8,13.21,7.65,6.05],["2026-05-28",77.47,19.66,10.25,8.24],["2026-05-29",63.07,16.8,10.27,7.74],["2026-05-30",41.43,8.77,6.15,4.44],["2026-05-31",42.78,8.12,4.35,2.7],["2026-06-01",64.08,17.91,11.03,7.92],["2026-06-02",76.68,21.82,13.45,10.08],["2026-06-03",66.11,20.61,13.3,9.0],["2026-06-04",64.92,20.25,11.29,7.62],["2026-06-05",66.47,21.79,12.44,8.59],["2026-06-06",40.51,9.65,6.42,3.93],["2026-06-07",35.91,6.5,4.04,2.84],["2026-06-08",49.79,14.68,7.94,5.99],["2026-06-09",47.29,13.23,7.46,5.61],["2026-06-10",46.43,10.24,5.86,4.53],["2026-06-11",48.01,12.68,6.87,4.64],["2026-06-12",50.92,11.27,6.54,5.05],["2026-06-13",29.06,4.84,2.92,2.0],["2026-06-14",28.53,4.26,2.68,1.96],["2026-06-15",52.84,12.53,7.31,5.15],["2026-06-16",54.42,11.02,6.21,4.56],["2026-06-17",42.96,9.15,5.74,4.32],["2026-06-18",44.32,10.28,6.5,4.97],["2026-06-19",39.42,7.78,4.9,3.87],["2026-06-20",29.24,5.22,2.91,2.12],["2026-06-21",34.3,6.67,4.29,3.5],["2026-06-22",46.45,10.3,5.71,4.61],["2026-06-23",49.12,12.65,7.36,5.56],["2026-06-24",49.23,13.22,6.58,5.34],["2026-06-25",62.74,18.67,8.82,7.35],["2026-06-26",73.69,19.36,9.99,7.77],["2026-06-27",38.85,6.53,3.5,2.49],["2026-06-28",31.96,5.9,3.33,2.18],["2026-06-29",59.59,14.91,8.71,6.43],["2026-06-30",66.64,17.97,10.43,8.27],["2026-07-01",53.93,13.67,7.85,6.18],["2026-07-02",59.43,18.77,10.48,7.6],["2026-07-03",50.94,11.14,6.84,4.77],["2026-07-04",34.03,5.96,3.68,2.4],["2026-07-05",32.81,4.7,3.13,2.2],["2026-07-06",49.8,12.64,7.83,6.03],["2026-07-07",53.79,12.46,7.74,5.85],["2026-07-08",47.15,9.87,6.48,4.63],["2026-07-09",44.33,9.76,6.36,4.48],["2026-07-10",51.32,11.2,6.86,5.29],["2026-07-11",34.61,4.84,2.73,2.09],["2026-07-12",37.47,5.69,3.1,2.35],["2026-07-13",62.91,12.93,6.85,5.48],["2026-07-14",53.16,14.19,7.65,6.05],["2026-07-15",53.37,12.46,8.52,6.4],["2026-07-16",51.3,9.22,6.35,4.47],["2026-07-17",45.45,10.45,6.93,5.09],["2026-07-18",35.19,5.99,3.39,2.37],["2026-07-19",29.81,6.25,3.84,2.11],["2026-07-20",42.76,9.53,6.15,4.69],["2026-07-21",63.44,14.09,7.71,6.0],["2026-07-22",50.47,9.92,6.67,4.86],["2026-07-23",58.89,11.27,6.22,4.43],["2026-07-24",56.57,11.72,5.51,4.06],["2026-07-25",44.1,9.39,4.72,3.45],["2026-07-26",42.85,6.44,2.95,2.01],["2026-07-27",59.52,11.48,6.49,4.43],["2026-07-28",59.73,9.94,6.06,4.71],["2026-07-29",66.13,10.64,5.89,4.53],["2026-07-30",68.02,14.89,8.33,6.27],["2026-07-31",66.83,20.64,13.35,11.44],["2026-08-01",50.85,13.68,9.8,7.96],["2026-08-02",41.61,9.1,6.11,4.72],["2026-08-03",59.45,15.05,9.28,6.64],["2026-08-04",55.08,13.95,9.06,6.46],["2026-08-05",57.36,16.36,10.19,8.11],["2026-08-06",53.44,12.37,8.22,6.14],["2026-08-07",52.73,12.33,7.77,5.87],["2026-08-08",42.7,5.42,3.71,2.49],["2026-08-09",32.66,4.75,3.2,2.21],["2026-08-10",47.02,11.06,7.06,5.24],["2026-08-11",45.53,10.27,6.73,5.2],["2026-08-12",61.55,12.06,7.59,5.78],["2026-08-13",51.88,9.12,5.69,4.43],["2026-08-14",63.87,10.74,6.02,4.51],["2026-08-15",48.99,5.45,3.06,2.3],["2026-08-16",43.59,4.87,2.72,1.95],["2026-08-17",65.61,10.45,6.08,4.63],["2026-08-18",60.76,11.72,6.76,5.13],["2026-08-19",69.24,15.3,9.24,7.24],["2026-08-20",91.88,21.07,12.83,10.16],["2026-08-21",99.09,24.83,14.78,11.84],["2026-08-22",55.77,11.09,6.82,4.97],["2026-08-23",47.92,8.13,5.29,3.79],["2026-08-24",82.85,18.31,11.12,8.56],["2026-08-25",88.11,20.36,11.56,8.63],["2026-08-26",79.83,17.83,9.78,7.38],["2026-08-27",84.04,20.36,12.17,9.07],["2026-08-28",84.1,22.2,13.37,10.33],["2026-08-29",61.26,8.01,4.57,3.01],["2026-08-30",59.81,6.44,3.4,2.55],["2026-08-31",82.85,16.68,9.62,7.78],["2026-09-01",78.18,16.3,10.42,7.31],["2026-09-02",72.82,13.04,8.39,6.29],["2026-09-03",84.93,16.68,9.55,7.14],["2026-09-04",77.43,15.5,9.16,6.87],["2026-09-05",54.28,6.15,3.96,2.69],["2026-09-06",49.13,8.49,4.6,3.62],["2026-09-07",57.62,9.65,5.78,4.48],["2026-09-08",60.69,11.79,6.82,5.05],["2026-09-09",68.76,12.9,7.84,5.72],["2026-09-10",65.66,12.9,7.95,5.79],["2026-09-11",65.53,12.87,7.04,5.35],["2026-09-12",50.16,6.13,3.57,2.61],["2026-09-13",52.91,5.61,3.2,2.35],["2026-09-14",63.54,11.1,6.96,5.11],["2026-09-15",76.09,15.15,7.92,6.03],["2026-09-16",66.9,15.33,8.77,6.27],["2026-09-17",83.4,16.05,9.69,7.75],["2026-09-18",97.93,19.73,11.12,8.47],["2026-09-19",67.45,8.78,5.31,3.7],["2026-09-20",51.78,7.38,4.35,3.39],["2026-09-21",103.73,27.14,15.51,11.58],["2026-09-22",103.44,24.75,15.62,12.29],["2026-09-23",132.9,19.76,11.29,9.23],["2026-09-24",91.36,16.04,9.5,7.74],["2026-09-25",102.95,22.29,12.2,8.99],["2026-09-26",83.62,8.58,4.59,3.19],["2026-09-27",56.97,6.8,3.59,2.7],["2026-09-28",79.71,23.95,14.84,11.57],["2026-09-29",136.86,24.14,13.29,10.74],["2026-09-30",85.19,18.28,10.67,8.26]];
+(function () {
+  const NS = 'http://www.w3.org/2000/svg';
+  const host = document.getElementById('chart'), tip = document.getElementById('tip');
+  const SER = [{"k": 2, "name": "Change removed", "color": "var(--c1)"}, {"k": 3, "name": "Early spends removed", "color": "var(--c2)"}, {"k": 4, "name": "Assumed change removed", "color": "var(--c3)"}];
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fmtDay = d => { const p = d.split('-'); return (+p[2]) + ' ' + MON[+p[1] - 1]; };
+  const fmtB = v => '$' + v.toFixed(1) + 'B';
+  const el = (n, a, t) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (t != null) e.textContent = t; return e; };
+  const WIN = 7;
+  const AVG = DATA.map((d, i) => i < WIN - 1 ? null : [1, 2, 3, 4].map(k => { let t = 0; for (let j = i - WIN + 1; j <= i; j++) t += DATA[j][k]; return t / WIN; }));
+  const val = (i, k) => AVG[i][k - 1];
+  let svg, geo, cur = -1;
+
+  function render() {
+    if (svg) svg.remove();
+    const W = host.clientWidth, H = Math.round(Math.max(260, Math.min(360, W * 0.62)));
+    const m = { l: 40, r: 0, t: 8, b: 26 };
+    const pw = W - m.l - m.r, ph = H - m.t - m.b, n = DATA.length;
+    const top = Math.max(...AVG.filter(Boolean).map(a => Math.max(...SER.map(s => a[s.k - 1]))));
+    const stepY = top > 60 ? 20 : 10, ymax = Math.ceil(top / stepY) * stepY;
+    const x = i => m.l + pw * i / (n - 1), y = v => m.t + ph * (1 - v / ymax);
+    geo = { m, pw, n, x, y, W };
+    svg = el('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, tabindex: 0, role: 'img',
+      'aria-label': 'Value of bitcoin transaction outputs per day, 7-day average, after each filter. Left and right arrow keys step through the days.' });
+    for (let v = 0; v <= ymax; v += stepY) {
+      svg.append(el('line', { x1: m.l, x2: W, y1: y(v), y2: y(v), stroke: v ? 'var(--line)' : 'var(--axis)', 'stroke-width': 1 }));
+      if (v) svg.append(el('text', { x: 0, y: y(v) + 4, class: 'tick' }, '$' + v + 'B'));
+    }
+    const months = DATA.map((d, i) => [d, i]).filter(p => p[0][0].slice(8) === '01');
+    const every = pw / months.length < 40 ? 2 : 1;
+    months.forEach((p, j) => {
+      if (j % every) return;
+      svg.append(el('text', { x: x(p[1]), y: H - 6, class: 'tick', 'text-anchor': p[1] ? 'middle' : 'start' }, MON[+p[0][0].slice(5, 7) - 1]));
+    });
+    SER.forEach(s => {
+      const pts = DATA.map((d, i) => AVG[i] ? x(i).toFixed(1) + ',' + y(val(i, s.k)).toFixed(1) : '').join(' ').trim();
+      svg.append(el('polyline', { points: pts, fill: 'none', stroke: s.color, 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+    });
+    const g = el('g', { id: 'hover', style: 'display:none' });
+    g.append(el('line', { id: 'xh', y1: m.t, y2: m.t + ph, stroke: 'var(--axis)', 'stroke-width': 1 }));
+    SER.forEach(s => g.append(el('circle', { id: 'dot' + s.k, r: 4, fill: s.color, stroke: 'var(--page)', 'stroke-width': 2 })));
+    svg.append(g);
+    svg.append(el('rect', { x: m.l, y: 0, width: pw, height: H, fill: 'transparent' }));
+    host.append(svg);
+    svg.addEventListener('pointermove', e => {
+      const r = svg.getBoundingClientRect();
+      show(Math.round(((e.clientX - r.left) - m.l) / pw * (n - 1)));
+    });
+    svg.addEventListener('pointerleave', hide);
+    svg.addEventListener('blur', hide);
+    svg.addEventListener('focus', () => show(cur < 0 ? n - 1 : cur));
+    svg.addEventListener('keydown', e => {
+      const step = { ArrowLeft: -1, ArrowRight: 1, PageUp: -30, PageDown: 30 }[e.key];
+      if (e.key === 'Home') show(WIN - 1); else if (e.key === 'End') show(n - 1); else if (step) show(cur + step); else return;
+      e.preventDefault();
+    });
+    cur = -1; hide();
+  }
+  function show(i) {
+    const { m, n, x, y, W } = geo;
+    i = Math.max(WIN - 1, Math.min(n - 1, i)); cur = i;
+    const d = DATA[i], px = x(i);
+    svg.querySelector('#hover').style.display = '';
+    const xh = svg.querySelector('#xh'); xh.setAttribute('x1', px); xh.setAttribute('x2', px);
+    SER.forEach(s => { const c = svg.querySelector('#dot' + s.k); c.setAttribute('cx', px); c.setAttribute('cy', y(val(i, s.k))); });
+    tip.replaceChildren();
+    const dd = document.createElement('div'); dd.className = 'd'; dd.textContent = fmtDay(d[0]); tip.append(dd);
+    SER.forEach(s => {
+      const r = document.createElement('div'); r.className = 'r';
+      const k = document.createElement('i'); k.style.background = s.color;
+      const b = document.createElement('b'); b.textContent = fmtB(val(i, s.k));
+      const sp = document.createElement('span'); sp.textContent = s.name;
+      r.append(k, b, sp); tip.append(r);
+    });
+    tip.style.display = 'block';
+    const tw = tip.offsetWidth;
+    tip.style.left = Math.max(0, Math.min(W - tw, px + 12 + tw > W ? px - 12 - tw : px + 12)) + 'px';
+    tip.style.top = m.t + 'px';
+  }
+  function hide() { if (svg) svg.querySelector('#hover').style.display = 'none'; tip.style.display = 'none'; }
+
+  const tb = document.querySelector('#daily tbody');
+  DATA.forEach((d, i) => {
+    const tr = document.createElement('tr');
+    [fmtDay(d[0])].concat(d.slice(1).map(fmtB)).forEach(t => { const td = document.createElement('td'); td.textContent = t; tr.append(td); });
+    tb.append(tr);
+  });
+  let lastW = 0;
+  const go = () => { if (host.clientWidth !== lastW) { lastW = host.clientWidth; render(); } };
+  window.addEventListener('resize', go); go();
+})();
+</script>
+</body>
+</html>
