@@ -94,12 +94,12 @@ summary:hover { color: var(--fg-2); }
 
   <section>
     <table>
-      <thead><tr><th>Counted</th><th>Total</th><th class="pd">Per day</th><th>Share</th></tr></thead>
+      <thead><tr><th>Counted</th><th>Total</th><th class="pd">Per day</th><th>Per tx</th><th class="pd">Share</th></tr></thead>
       <tbody>
-        <tr><td><i class="sw"></i>All outputs<small>Every output of every transaction.</small></td><td>$16.06T</td><td class="pd">$58.8B</td><td>100%</td></tr>
-        <tr><td><i class="sw c1"></i>Change removed<small>Outputs paid back to a sending address.</small></td><td>$4.08T</td><td class="pd">$14.9B</td><td>25%</td></tr>
-        <tr><td><i class="sw c2"></i>Early spends removed<small>Outputs spent again within an hour.</small></td><td>$2.22T</td><td class="pd">$8.1B</td><td>14%</td></tr>
-        <tr><td><i class="sw c3"></i>Assumed change removed<small>Non-round outputs paid alongside a round one.</small></td><td>$1.60T</td><td class="pd">$5.9B</td><td>10%</td></tr>
+        <tr><td><i class="sw"></i>All outputs<small>Every output of every transaction.</small></td><td>$16.06T</td><td class="pd">$58.8B</td><td>$101K</td><td class="pd">100%</td></tr>
+        <tr><td><i class="sw c1"></i>Change removed<small>Outputs paid back to a sending address.</small></td><td>$4.08T</td><td class="pd">$14.9B</td><td>$25.8K</td><td class="pd">25%</td></tr>
+        <tr><td><i class="sw c2"></i>Early spends removed<small>Outputs spent again within an hour.</small></td><td>$2.22T</td><td class="pd">$8.1B</td><td>$14.0K</td><td class="pd">14%</td></tr>
+        <tr><td><i class="sw c3"></i>Assumed change removed<small>Non-round outputs paid alongside a round one.</small></td><td>$1.60T</td><td class="pd">$5.9B</td><td>$10.1K</td><td class="pd">10%</td></tr>
       </tbody>
     </table>
   </section>
@@ -114,7 +114,7 @@ summary:hover { color: var(--fg-2); }
   </section>
 
   <div class="notes">
-    <p>Blocks 930,341 to 969,369, read from Breez's Bitcoin Core node. Dollars at the Coin Metrics daily rate. A round amount is a multiple of 0.00001 BTC.</p>
+    <p>Blocks 930,341 to 969,369, 158,405,571 transactions, read from Breez's Bitcoin Core node. Dollars at the Coin Metrics daily rate. A round amount is a multiple of 0.00001 BTC.</p>
     <p>The filters follow Coin Metrics. They cannot tell an exchange moving its own coins from a payment. Lightning is not counted.</p>
     <p><a href="https://github.com/kingonly/bitcoin-moe">Code</a> &nbsp;·&nbsp; <a href="daily.csv" download>Daily data</a></p>
   </div>

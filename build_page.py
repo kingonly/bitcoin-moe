@@ -34,6 +34,12 @@ def bn(usd):
     return f"${usd / 1e9:.1f}B"
 
 
+def per_tx(usd):
+    """Three significant figures: $101K, $25.8K."""
+    k = usd / 1e3
+    return f"${k:,.0f}K" if k >= 100 else f"${k:.1f}K"
+
+
 def long_date(d):
     return f"{d.day} {d.strftime('%B')}"
 
@@ -57,6 +63,7 @@ def main():
     n = len(sel)
 
     usd = {k: sum(float(r[k + "_usd"]) for r in sel) for k, _, _ in ROWS}
+    tx = sum(int(r["tx_count"]) for r in sel)
     h0, h1 = sel[0]["first_height"], sel[-1]["last_height"]
     period_long = f"{long_date(d0)} to {long_date(d1)} {d1.year}"
 
@@ -64,7 +71,8 @@ def main():
     for i, (k, name, rule) in enumerate(ROWS):
         ladder.append(
             f'        <tr><td><i class="sw{f" c{i}" if i else ""}"></i>{html.escape(name)}<small>{html.escape(rule)}</small></td>'
-            f'<td>{tn(usd[k])}</td><td class="pd">{bn(usd[k] / n)}</td><td>{usd[k] / usd["raw"] * 100:.0f}%</td></tr>')
+            f'<td>{tn(usd[k])}</td><td class="pd">{bn(usd[k] / n)}</td><td>{per_tx(usd[k] / tx)}</td>'
+            f'<td class="pd">{usd[k] / usd["raw"] * 100:.0f}%</td></tr>')
 
     data = [[r["date"]] + [round(float(r[k + "_usd"]) / 1e9, 2) for k, _, _ in ROWS] for r in sel]
     # the chart plots the filtered rows only; all outputs would flatten them
@@ -76,6 +84,7 @@ def main():
         "__LADDER__": "\n".join(ladder),
         "__H0__": f"{int(h0):,}",
         "__H1__": f"{int(h1):,}",
+        "__TX__": f"{tx:,}",
         "__ROUND__": ROUND_BTC[STRICT],
         "__REPO_URL__": REPO_URL,
         "__DATA__": json.dumps(data, separators=(",", ":")),
